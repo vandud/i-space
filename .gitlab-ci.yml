@@ -1,0 +1,34 @@
+stages:
+  - mirror
+  - lint
+
+
+Clone repo from Github:
+  image: bitnami/git
+  stage: mirror
+  only:
+    - schedules
+  tags:
+    - i-space.pro
+  script:
+    - mkdir ~/.ssh
+    - echo "$SSH_id_rsa" | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - git clone https://github.com/vandud/i-space.git repo
+    - cd repo
+    - git config user.email "gitlab-runner@mon-test-vm-03y"
+    - git config user.name "GitLab Pipelines"
+    - git config core.sshCommand 'ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa'
+    - LAST_COMMIT_REF=`git rev-parse --short HEAD`
+    - git remote add ifree git@gitlab.i-free.com:i.dudin/i-space.pro.git
+    - git checkout -b $LAST_COMMIT_REF
+    - git push ifree $LAST_COMMIT_REF
+
+npm lint:
+  image: node
+  stage: lint
+  tags:
+    - i-space.pro
+  script:
+    - npm install
+    - npm run lint
